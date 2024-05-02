@@ -1,0 +1,57 @@
+CREATE TABLE Companies (
+    CompanyID INT PRIMARY KEY,
+    Name VARCHAR(100),
+    Industry VARCHAR(100),
+    CEO VARCHAR(100),
+    Headquarters VARCHAR(100),
+    FoundedYear INT,
+    Employees INT,
+    MarketCap DECIMAL(15, 2),
+    PE_Ratio DECIMAL(5, 2),
+    DividendYield DECIMAL(5, 2),
+    EPS DECIMAL(5, 2)
+);
+
+CREATE TABLE Stocks (
+    StockID INT PRIMARY KEY,
+    CompanyID INT,
+    Date DATE,
+    OpenPrice DECIMAL(10, 2),
+    HighPrice DECIMAL(10, 2),
+    LowPrice DECIMAL(10, 2),
+    ClosePrice DECIMAL(10, 2),
+    Volume BIGINT,
+    FOREIGN KEY (CompanyID) REFERENCES Companies(CompanyID)
+);
+
+CREATE TABLE Bonds (
+    BondID INT PRIMARY KEY,
+    CompanyID INT,
+    IssueDate DATE,
+    MaturityDate DATE,
+    CouponRate DECIMAL(5, 2),
+    FaceValue DECIMAL(10, 2),
+    FOREIGN KEY (CompanyID) REFERENCES Companies(CompanyID)
+);
+
+CREATE TABLE Forex (
+    ForexID INT PRIMARY KEY,
+    BaseCurrency VARCHAR(10),
+    QuoteCurrency VARCHAR(10),
+    Date DATE,
+    OpenRate DECIMAL(10, 5),
+    HighRate DECIMAL(10, 5),
+    LowRate DECIMAL(10, 5),
+    CloseRate DECIMAL(10, 5)
+);
+
+CREATE TABLE Commodities (
+    CommodityID INT PRIMARY KEY,
+    CommodityName VARCHAR(50),
+    Date DATE,
+    OpenPrice DECIMAL(10, 2),
+    HighPrice DECIMAL(10, 2),
+    LowPrice DECIMAL(10, 2),
+    ClosePrice DECIMAL(10, 2),
+    Volume BIGINT
+);
