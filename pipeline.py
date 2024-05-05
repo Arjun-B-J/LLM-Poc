@@ -10,17 +10,18 @@ with open('output.sql', 'r') as file:
     # Read the file content
     schema = file.read()
 
-query = "Get all details of all actors whose name starts with letter A"
+
+query = "Get all details of all actors from the actor table whose name starts with letter A"
 
 specialInstructions = ". Note just give output the query If you are unable to answer, output give unable to give for the current query"
 
 #Formulating the querry
-modelPrompt = "The following is an SQL Schema: "+ schema + ". Based on this schema generate SQL Querry for the following question: " + query 
+modelPrompt = "for the following sql schema <"+ schema + ">generate mySQL Querry for the following question <" + query + ">"
 # Invoke the model to generate responses
 modelResponse = llm.invoke(modelPrompt)
 print(f"Model Response: {modelResponse}")
 
-modelResponse = llm.invoke("from the following string give just an proper sql querry,Note dont write anything else in the response except for the sql querry: "+modelResponse)
+modelResponse = llm.invoke("from the following string give just an proper mysql querry,Note dont write anything else in the response except for the sql querry: "+modelResponse)
 
 
 print(f"Model Generated SQL Querry: {modelResponse}\n\n")
