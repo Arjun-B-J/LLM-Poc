@@ -4,7 +4,7 @@ db = mysql.connector.connect(
   host="localhost",  # replace with your host name
   user="root",  # replace with your username
   password="pass",  # replace with your password
-  database="sakila"  # replace with your database name
+  database="new_schema"  # replace with your database name
 )
 
 # Create a cursor object
