@@ -6,18 +6,13 @@ from pandasai import SmartDataframe
 import os
 
 def llmForSQL(query):
-    return """SELECT t1.CUSIP, (t2.price - t1.price) AS margin
-FROM Trades t1
-INNER JOIN Trace t2 ON t1.CUSIP = t2.CUSIP AND t1.quantity = t2.quantity
-WHERE t1.clientName <> 'WFS'
-AND t1.CUSIP IN (
-    SELECT CUSIP
-    FROM Trace
-    GROUP BY CUSIP
-    ORDER BY SUM(quantity) DESC 
-)
-ORDER BY margin DESC limit 4;
-""";
+    return """SELECT CITY, COUNT(*) AS CustomerCount
+FROM Customer
+WHERE DATEDIFF(CURRENT_DATE, LASTPAYMENT) >= 99 
+  AND LASTCONTACT = CURRENT_DATE 
+  AND ADJUSTLIMIT = TRUE
+GROUP BY CITY;
+"""
     # Initialize an instance of the Ollama model
     llm = Ollama(model="sqlcoder",temperature=0)
     llm2 = Ollama(model="llama3")
@@ -47,7 +42,7 @@ ORDER BY margin DESC limit 4;
     ```sql"""
 
     # Invoke the model to generate responses
-    modelResponse = llm2.invoke(prompt)
+    modelResponse = llm.invoke(prompt)
 
     modelResponse = llm2.invoke("From the following string give just an proper mysql querry,Note do not write anything else in the response except for the sql querry. Note make changes to the querry so that it becomes a proper mysql querry: "+modelResponse)
 
@@ -62,7 +57,7 @@ def executeQuery(querySQL):
     host="localhost",  # replace with your host name
     user="root",  # replace with your username
     password="pass",  # replace with your password
-    database="coporate_bonds"  # replace with your database name
+    database="creditcard"  # replace with your database name
     )
 
     # Create a cursor object
@@ -88,33 +83,45 @@ def executeQuery(querySQL):
 def main():
     st.set_page_config(page_title="Lumen.AI")
     st.header("Lumen.AI")
-    # Create a text input box and get the user input
- 
-    user_input = st.text_input("Enter your input here:")
+
+    # Initialize session state to store query history
+    if 'query_history' not in st.session_state:
+        st.session_state['query_history'] = []
+
+    query_container = st.container()
+
+    with query_container:
+        user_input = st.text_input("Enter your Query here:")
 
     if user_input:
         with st.spinner('Processing...'):
-            with st.expander("Generating SQL Query based on your input",expanded=True):
-                modelGenQuery = llmForSQL(user_input)
-                st.write(modelGenQuery)
-            
-            st.write("Executing the Query in the DB")
-            df = executeQuery(modelGenQuery)
+            modelGenQuery = llmForSQL(user_input)  # Assume llmForSQL is a function that generates SQL query
+            df = executeQuery(modelGenQuery)  # Assume executeQuery is a function that executes the SQL query and returns a dataframe
 
-            with st.expander("Response From DB",expanded=True):
-                st.write(df)
+            # Store the query and result in the session state history
+            st.session_state['query_history'].append((user_input, modelGenQuery, df))
 
-            st.write("Plotting the Data")
-            with st.expander("Plot",expanded=True):
-                fig = plotAI(df) 
-                st.image(fig)
-                #st.image("C:/Users/bjarj/OneDrive/Documents/GitHub/LLM-Poc/exports/charts/temp_chart.png")
-            
+    # Display previous queries and results in reverse order
+    for idx, (user_query, sql_query, result) in enumerate(reversed(st.session_state['query_history'])):
+        with st.expander(f"{len(st.session_state['query_history']) - idx}: {user_query}", expanded=True):
+            st.markdown(f"**User Input:** {user_query}")
+            st.markdown(f"**Generated SQL Query:**\n```sql\n{sql_query}\n```")
+            st.markdown("**Response From DB:**")
+            st.write(result)
+
+            # Plotting the data
+            st.markdown("**Plotting the Data**")
+            # Add your plotting logic here. For demonstration, using a sample image.
+            st.image("C:/Users/bjarj/OneDrive/Documents/GitHub/LLM-Poc/exports/charts/temp_chart.png")
+
+
+
+
 
 def plotAI(df):
     llm = Ollama(model="llama3")
     df = SmartDataframe(df, config={"llm": llm})
-    plot = df.chat("Plot margin as bar graph. give x axis the CUSIP and y axis as Margin. Give title 'Margin of missed trades'")
+    plot = df.chat("Plot as a bar graph, give y axis Customer Count and mark X axis with the city names from the data, give appropriate titles'")
     
     # Return the absolute path of the file
     return plot
