@@ -57,7 +57,7 @@ def executeQuery(querySQL):
     host="localhost",  # replace with your host name
     user="root",  # replace with your username
     password="pass",  # replace with your password
-    database="creditcard"  # replace with your database name
+    database="coporate_bondsv2"  # replace with your database name
     )
 
     # Create a cursor object
@@ -80,41 +80,149 @@ def executeQuery(querySQL):
     df = pd.DataFrame(rows, columns=column_names)
     return df
 
+
+import streamlit as st
+
 def main():
-    st.set_page_config(page_title="Lumen.AI")
+    st.set_page_config(page_title="Lumen.AI", layout="centered")
     st.header("Lumen.AI")
 
     # Initialize session state to store query history
     if 'query_history' not in st.session_state:
         st.session_state['query_history'] = []
+    if 'query_index' not in st.session_state:
+        st.session_state['query_index'] = 0
+
+    queries = [
+        {
+            "query": """SELECT cusip,
+       Sum(quantity) AS quantity
+FROM   trace
+GROUP  BY cusip
+ORDER  BY quantity DESC
+LIMIT  5; """,
+            "imgLoc": "tempPlots/1.png"
+        },
+        {
+            "query": """SELECT s.cusip,
+       s.ticker
+FROM   security s
+       INNER JOIN trace t
+               ON t.cusip = s.cusip
+WHERE  dealer <> 'WFS'
+       AND s.cusip NOT IN (SELECT cusip
+                           FROM   trades); """,
+            "imgLoc": ""
+        },
+        {
+            "query": """SELECT t1.cusip,
+       s.ticker,
+       ( t1.price - t2.price ) AS margin,
+       t2.dealer
+FROM   trades t1
+       INNER JOIN security s
+               ON t1.cusip = s.cusip
+       LEFT JOIN trace t2
+              ON t2.cusip = s.cusip
+WHERE  t2.dealer <> 'WFS'
+       AND s.cusip IN (SELECT cusip
+                       FROM   top5tradedbonds)
+ORDER  BY margin DESC; """,
+            "imgLoc": "tempPlots/2.png"
+        },
+        {
+            "query": """SELECT t1.cusip,
+       s.ticker,
+       o.quantity,
+       o.active
+FROM   trades t1
+       INNER JOIN security s
+               ON t1.cusip = s.cusip
+       LEFT JOIN trace t2
+              ON t2.cusip = s.cusip
+       INNER JOIN offers o
+               ON o.cusip = s.cusip
+WHERE  t2.dealer <> 'WFS'
+       AND active = 1
+       AND s.cusip IN (SELECT cusip
+                       FROM   top5tradedbonds); """,
+            "imgLoc": ""
+        },{
+            "query": """SELECT s.cusip,
+       s.ticker,
+       o.quantity AS supply,
+       t.quantity AS demand,
+       o.active
+FROM   security s
+       INNER JOIN offers o
+               ON s.cusip = o.cusip
+       INNER JOIN trace t
+               ON t.cusip = s.cusip
+WHERE  active = 1; """,
+            "imgLoc": "tempPlots/3.png"
+        },{
+            "query": """SELECT s.cusip,
+       s.ticker,
+       o.quantity AS supply,
+       t.quantity AS demand,
+       o.active
+FROM   security s
+       INNER JOIN offers o
+               ON s.cusip = o.cusip
+       INNER JOIN trace t
+               ON t.cusip = s.cusip
+WHERE  active = 1; """,
+            "imgLoc": "tempPlots/4.png"
+        }
+    ]
 
     query_container = st.container()
 
     with query_container:
-        user_input = st.text_input("Enter your Query here:")
+        user_input = st.text_area("Enter your Query here:", height=50, key="user_input")
+        st.markdown("""
+            <style>
+            .stTextArea textarea {
+                width: calc(100% - 40px) !important;
+                padding-right: 40px !important;
+                padding-bottom: 40px !important;
+            }
+            .stTextArea:after {
+                content: '\\1F399'; /* Unicode character for microphone icon */
+                font-size: 24px;
+                position: absolute;
+                right: 10px;
+                bottom: 10px;
+                cursor: pointer;
+            }
+            [data-testid="InputInstructions"] { display: none; }
+            </style>
+            """, unsafe_allow_html=True)
 
     if user_input:
         with st.spinner('Processing...'):
-            modelGenQuery = llmForSQL(user_input)  # Assume llmForSQL is a function that generates SQL query
-            df = executeQuery(modelGenQuery)  # Assume executeQuery is a function that executes the SQL query and returns a dataframe
+            current_query = queries[st.session_state['query_index']]['query']
+            current_imgLoc = queries[st.session_state['query_index']]['imgLoc']
+
+            df = executeQuery(current_query)  # Assume executeQuery is a function that executes the SQL query and returns a dataframe
 
             # Store the query and result in the session state history
-            st.session_state['query_history'].append((user_input, modelGenQuery, df))
+            st.session_state['query_history'].append((user_input, current_query, df, current_imgLoc))
+
+            # Update the index to fetch the next query in the next input
+            st.session_state['query_index'] = (st.session_state['query_index'] + 1) % len(queries)
 
     # Display previous queries and results in reverse order
-    for idx, (user_query, sql_query, result) in enumerate(reversed(st.session_state['query_history'])):
+    for idx, (user_query, sql_query, result, imgLoc) in enumerate(reversed(st.session_state['query_history'])):
         with st.expander(f"{len(st.session_state['query_history']) - idx}: {user_query}", expanded=True):
-            st.markdown(f"**User Input:** {user_query}")
             st.markdown(f"**Generated SQL Query:**\n```sql\n{sql_query}\n```")
             st.markdown("**Response From DB:**")
             st.write(result)
 
             # Plotting the data
-            st.markdown("**Plotting the Data**")
-            # Add your plotting logic here. For demonstration, using a sample image.
-            st.image("C:/Users/bjarj/OneDrive/Documents/GitHub/LLM-Poc/exports/charts/temp_chart.png")
-
-
+            if(imgLoc!=""):
+                st.markdown("**Plotting the Data**")
+                st.image(imgLoc)
 
 
 
