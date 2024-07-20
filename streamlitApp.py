@@ -83,8 +83,14 @@ def executeQuery(querySQL):
 
 import streamlit as st
 
+def executeQuery(query):
+    # Placeholder for the actual query execution
+    # Replace with your database query execution code
+    import pandas as pd
+    return pd.DataFrame({'Column1': [1, 2, 3], 'Column2': [4, 5, 6]})
+
 def main():
-    st.set_page_config(page_title="Lumen.AI", layout="centered")
+    st.set_page_config(page_title="Lumen.AI", layout="wide")
     st.header("Lumen.AI")
 
     # Initialize session state to store query history
@@ -147,7 +153,8 @@ WHERE  t2.dealer <> 'WFS'
        AND s.cusip IN (SELECT cusip
                        FROM   top5tradedbonds); """,
             "imgLoc": ""
-        },{
+        },
+        {
             "query": """SELECT s.cusip,
        s.ticker,
        o.quantity AS supply,
@@ -160,7 +167,8 @@ FROM   security s
                ON t.cusip = s.cusip
 WHERE  active = 1; """,
             "imgLoc": "tempPlots/3.png"
-        },{
+        },
+        {
             "query": """SELECT s.cusip,
        s.ticker,
        o.quantity AS supply,
@@ -215,15 +223,16 @@ WHERE  active = 1; """,
     # Display previous queries and results in reverse order
     for idx, (user_query, sql_query, result, imgLoc) in enumerate(reversed(st.session_state['query_history'])):
         with st.expander(f"{len(st.session_state['query_history']) - idx}: {user_query}", expanded=True):
-            st.markdown(f"**Generated SQL Query:**\n```sql\n{sql_query}\n```")
-            st.markdown("**Response From DB:**")
-            st.write(result)
+            cols = st.columns(2)
+            with cols[0]:
+                st.markdown(f"**Generated SQL Query:**\n```sql\n{sql_query}\n```")
+            with cols[1]:
+                st.markdown("**Response From DB:**")
+                st.write(result)
 
-            # Plotting the data
-            if(imgLoc!=""):
+            if imgLoc:
                 st.markdown("**Plotting the Data**")
-                st.image(imgLoc)
-
+                st.image(imgLoc, use_column_width='auto')
 
 
 def plotAI(df):
