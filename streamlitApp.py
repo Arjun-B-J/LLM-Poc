@@ -91,6 +91,36 @@ def executeQuery(query):
 
 def main():
     st.set_page_config(page_title="Lumen.AI", layout="wide")
+
+    # Remove top space using CSS
+    st.markdown("""
+        <style>
+        /* Remove padding */
+        .css-18e3th9 {
+            padding-top: 0rem;
+            padding-bottom: 0rem;
+            padding-left: 0rem;
+            padding-right: 0rem;
+        }
+        .css-1d391kg {
+            padding-top: 0rem;
+            padding-bottom: 0rem;
+            padding-left: 0rem;
+            padding-right: 0rem;
+        }
+        .css-1v3fvcr {
+            padding-top: 0rem;
+            padding-bottom: 0rem;
+            padding-left: 0rem;
+            padding-right: 0rem;
+        }
+        /* Hide the "Deploy" button and the menu dots */
+        header, footer, .viewerBadge_link__1S137 {
+            display: none !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
     st.header("Lumen.AI")
 
     # Initialize session state to store query history
@@ -102,6 +132,12 @@ def main():
     queries = [
         {
             "query": """SELECT cusip,
+       Sum(quantity) AS quantity
+FROM   trace
+GROUP  BY cusip
+ORDER  BY quantity DESC
+LIMIT  5; 
+SELECT cusip,
        Sum(quantity) AS quantity
 FROM   trace
 GROUP  BY cusip
@@ -233,6 +269,20 @@ WHERE  active = 1; """,
             if imgLoc:
                 st.markdown("**Plotting the Data**")
                 st.image(imgLoc, use_column_width='auto')
+            else:
+                st.markdown("   ")
+                st.markdown("   ")
+                st.markdown("   ")
+                st.markdown("   ")
+                st.markdown("   ")
+                st.markdown("   ")
+                st.markdown("\n\n\nVisualization Not Available\n\n\n")
+                st.markdown("   ")
+                st.markdown("   ")
+                st.markdown("   ")
+                st.markdown("   ")
+                st.markdown("   ")
+                st.markdown("   ")
 
 
 def plotAI(df):
