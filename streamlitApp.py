@@ -51,13 +51,18 @@ GROUP BY CITY;
     return modelResponse
     #return "SELECT s.stockname, s.changes FROM stockmarket s ORDER BY s.changes DESC LIMIT 10;"
 
+
+
+
+import streamlit as st
+
 def executeQuery(querySQL):
         # Create a connection to the database
     db = mysql.connector.connect(
     host="localhost",  # replace with your host name
     user="root",  # replace with your username
     password="pass",  # replace with your password
-    database="coporate_bondsv2"  # replace with your database name
+    database="agileV2"  # replace with your database name
     )
 
     # Create a cursor object
@@ -79,15 +84,6 @@ def executeQuery(querySQL):
     # Convert the data to pandas DataFrame
     df = pd.DataFrame(rows, columns=column_names)
     return df
-
-
-import streamlit as st
-
-def executeQuery(query):
-    # Placeholder for the actual query execution
-    # Replace with your database query execution code
-    import pandas as pd
-    return pd.DataFrame({'Column1': [1, 2, 3], 'Column2': [4, 5, 6]})
 
 def main():
     st.set_page_config(page_title="Lumen.AI", layout="wide")
@@ -118,6 +114,19 @@ def main():
         header, footer, .viewerBadge_link__1S137 {
             display: none !important;
         }
+                 .reportview-container {
+            margin-top: 0rem;
+        }
+        #MainMenu {visibility: hidden;}
+        .stDeployButton {display:none;}
+        footer {visibility: hidden;}
+        #stDecoration {display:none;}
+        .st-emotion-cache-1jicfl2 {
+    width: 100%;
+    padding: 0rem 6rem 10rem;
+    min-width: auto;
+    max-width: initial;
+}
         </style>
         """, unsafe_allow_html=True)
 
@@ -131,92 +140,52 @@ def main():
 
     queries = [
         {
-            "query": """SELECT cusip,
-       Sum(quantity) AS quantity
-FROM   trace
-GROUP  BY cusip
-ORDER  BY quantity DESC
-LIMIT  5; 
-SELECT cusip,
-       Sum(quantity) AS quantity
-FROM   trace
-GROUP  BY cusip
-ORDER  BY quantity DESC
-LIMIT  5; """,
-            "imgLoc": "tempPlots/1.png"
+            "query": """SELECT t.NAME,
+       Round(Avg(s.pointssdelivered), 3)                  AS velocity,
+       Round(Sum(s.pointssdelivered) / Sum(t.tmcount), 3) AS per_tm
+FROM   team t
+       INNER JOIN sprints s
+               ON t.NAME = s.team
+GROUP  BY t.NAME; """,
+            "imgLoc": "charts/1.png"
         },
         {
-            "query": """SELECT s.cusip,
-       s.ticker
-FROM   security s
-       INNER JOIN trace t
-               ON t.cusip = s.cusip
-WHERE  dealer <> 'WFS'
-       AND s.cusip NOT IN (SELECT cusip
-                           FROM   trades); """,
-            "imgLoc": ""
+            "query": """SELECT team,
+       Count(*)         AS HowManyTimes,
+       Avg(pointsadded) AS AveragePoints
+FROM   sprints
+WHERE  pointsadded > 0
+       AND team IN (SELECT NAME
+                    FROM   viewavgvelocity)
+GROUP  BY team
+ORDER  BY Count(*) DESC; """,
+            "imgLoc": "charts/2.png"
         },
         {
-            "query": """SELECT t1.cusip,
-       s.ticker,
-       ( t1.price - t2.price ) AS margin,
-       t2.dealer
-FROM   trades t1
-       INNER JOIN security s
-               ON t1.cusip = s.cusip
-       LEFT JOIN trace t2
-              ON t2.cusip = s.cusip
-WHERE  t2.dealer <> 'WFS'
-       AND s.cusip IN (SELECT cusip
-                       FROM   top5tradedbonds)
-ORDER  BY margin DESC; """,
-            "imgLoc": "tempPlots/2.png"
+            "query": """SELECT team,
+       Count(*)         AS HowManyTimes,
+       Sum(pointsadded) AS TotalPoints
+FROM   sprints
+WHERE  pointsadded > 0
+       AND team IN (SELECT NAME
+                    FROM   viewavgvelocity)
+       AND pointscomitted > pointssdelivered
+GROUP  BY team
+ORDER  BY Count(*) DESC; """,
+            "imgLoc": "charts/3.png"
         },
         {
-            "query": """SELECT t1.cusip,
-       s.ticker,
-       o.quantity,
-       o.active
-FROM   trades t1
-       INNER JOIN security s
-               ON t1.cusip = s.cusip
-       LEFT JOIN trace t2
-              ON t2.cusip = s.cusip
-       INNER JOIN offers o
-               ON o.cusip = s.cusip
-WHERE  t2.dealer <> 'WFS'
-       AND active = 1
-       AND s.cusip IN (SELECT cusip
-                       FROM   top5tradedbonds); """,
-            "imgLoc": ""
-        },
-        {
-            "query": """SELECT s.cusip,
-       s.ticker,
-       o.quantity AS supply,
-       t.quantity AS demand,
-       o.active
-FROM   security s
-       INNER JOIN offers o
-               ON s.cusip = o.cusip
-       INNER JOIN trace t
-               ON t.cusip = s.cusip
-WHERE  active = 1; """,
-            "imgLoc": "tempPlots/3.png"
-        },
-        {
-            "query": """SELECT s.cusip,
-       s.ticker,
-       o.quantity AS supply,
-       t.quantity AS demand,
-       o.active
-FROM   security s
-       INNER JOIN offers o
-               ON s.cusip = o.cusip
-       INNER JOIN trace t
-               ON t.cusip = s.cusip
-WHERE  active = 1; """,
-            "imgLoc": "tempPlots/4.png"
+            "query": """SELECT team,
+       Count(*)         AS HowManyTimes,
+       Sum(pointsadded) AS TotalPoints
+FROM   sprints
+WHERE  pointsadded > 0
+       AND shrp > 0
+       AND team IN (SELECT NAME
+                    FROM   viewavgvelocity)
+GROUP  BY team
+ORDER  BY Count(*) DESC; """,
+            "imgLoc": "charts/4.png"
         }
     ]
 
