@@ -1,3 +1,5 @@
+import re
+import time
 import streamlit as st
 from langchain_community.llms import Ollama
 import mysql.connector
@@ -85,6 +87,7 @@ def executeQuery(querySQL):
     df = pd.DataFrame(rows, columns=column_names)
     return df
 
+
 def main():
     st.set_page_config(page_title="Lumen.AI", layout="wide")
 
@@ -92,29 +95,14 @@ def main():
     st.markdown("""
         <style>
         /* Remove padding */
-        .css-18e3th9 {
-            padding-top: 0rem;
-            padding-bottom: 0rem;
-            padding-left: 0rem;
-            padding-right: 0rem;
-        }
-        .css-1d391kg {
-            padding-top: 0rem;
-            padding-bottom: 0rem;
-            padding-left: 0rem;
-            padding-right: 0rem;
-        }
-        .css-1v3fvcr {
-            padding-top: 0rem;
-            padding-bottom: 0rem;
-            padding-left: 0rem;
-            padding-right: 0rem;
+        .css-18e3th9, .css-1d391kg, .css-1v3fvcr {
+            padding: 0rem;
         }
         /* Hide the "Deploy" button and the menu dots */
         header, footer, .viewerBadge_link__1S137 {
             display: none !important;
         }
-                 .reportview-container {
+        .reportview-container {
             margin-top: 0rem;
         }
         #MainMenu {visibility: hidden;}
@@ -122,11 +110,14 @@ def main():
         footer {visibility: hidden;}
         #stDecoration {display:none;}
         .st-emotion-cache-1jicfl2 {
-    width: 100%;
-    padding: 0rem 6rem 10rem;
-    min-width: auto;
-    max-width: initial;
-}
+            width: 100%;
+            padding: 0rem 6rem 10rem;
+            min-width: auto;
+            max-width: initial;
+        }
+        .stTextArea textarea {
+            font-size: 24px !important; /* Adjust the font size here */
+        }               
         </style>
         """, unsafe_allow_html=True)
 
@@ -173,7 +164,8 @@ WHERE  pointsadded > 0
 GROUP  BY team
 ORDER  BY Count(*) DESC; """,
             "imgLoc": "charts/3.png"
-        },
+        }
+        ,
         {
             "query": """SELECT team,
        Count(*)         AS HowManyTimes,
@@ -189,31 +181,46 @@ ORDER  BY Count(*) DESC; """,
         }
     ]
 
-    query_container = st.container()
+    
 
-    with query_container:
-        user_input = st.text_area("Enter your Query here:", height=50, key="user_input")
-        st.markdown("""
-            <style>
-            .stTextArea textarea {
-                width: calc(100% - 40px) !important;
-                padding-right: 40px !important;
-                padding-bottom: 40px !important;
-            }
-            .stTextArea:after {
-                content: '\\1F399'; /* Unicode character for microphone icon */
-                font-size: 24px;
-                position: absolute;
-                right: 10px;
-                bottom: 10px;
-                cursor: pointer;
-            }
-            [data-testid="InputInstructions"] { display: none; }
-            </style>
-            """, unsafe_allow_html=True)
+
+    user_input = st.text_area("Enter your Query here:", height=50, key="user_input")
+    st.markdown("""
+        <style>
+        .stTextArea textarea {
+            width: calc(100% - 40px) !important;
+            padding-right: 40px !important;
+            padding-bottom: 40px !important;
+        }
+        .stTextArea:after {
+            content: '\\1F399'; /* Unicode character for microphone icon */
+            font-size: 24px;
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            cursor: pointer;
+        }
+        [data-testid="InputInstructions"] { display: none; }
+        </style>
+        """, unsafe_allow_html=True)
+
+    query_container = st.empty()
+    st.markdown(
+    """
+    <style>
+    .streamlit-expanderHeader {
+        font-size: 24px !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
     if user_input:
         with st.spinner('Processing...'):
+            # Clear the query container before displaying new content
+            query_container.empty()
+
             current_query = queries[st.session_state['query_index']]['query']
             current_imgLoc = queries[st.session_state['query_index']]['imgLoc']
 
@@ -225,35 +232,77 @@ ORDER  BY Count(*) DESC; """,
             # Update the index to fetch the next query in the next input
             st.session_state['query_index'] = (st.session_state['query_index'] + 1) % len(queries)
 
+            with query_container.container():
+                with st.expander(f"Current Query: {user_input}", expanded=True):
+                    cols = st.columns(2)
+                    with cols[0]:
+                        with st.spinner('Generating SQL Query...'):
+                            sql_placeholder = st.empty()
+                            full_query = ""
+                            # Split by space or newline to keep the newlines intact
+                            for word in re.split(r'(\s+|\n)', current_query):
+                                full_query += word
+                                sql_placeholder.markdown(f"**Generated SQL Query:**\n```sql\n{full_query}\n```")
+                                time.sleep(0.04)
+                            sql_placeholder.code(full_query.strip(), language='sql')
+                    
+                    with cols[1]:
+                        with st.spinner('Getting Response from DB...'):
+                            time.sleep(0.5)
+                            st.markdown("**Response From DB:**")
+                            st.write(df)
+
+                    if current_imgLoc:
+                        with st.spinner('Plotting the Data...'):
+                            time.sleep(1)
+                            st.markdown("**Plotting the Data**")
+                            st.image(current_imgLoc, use_column_width='auto')
+                    else:
+                        st.markdown("   ")
+                        st.markdown("   ")
+                        st.markdown("   ")
+                        st.markdown("   ")
+                        st.markdown("   ")
+                        st.markdown("   ")
+                        st.markdown("\n\n\nVisualization Not Available\n\n\n")
+                        st.markdown("   ")
+                        st.markdown("   ")
+                        st.markdown("   ")
+                        st.markdown("   ")
+                        st.markdown("   ")
+                        st.markdown("   ")
+
     # Display previous queries and results in reverse order
-    for idx, (user_query, sql_query, result, imgLoc) in enumerate(reversed(st.session_state['query_history'])):
-        with st.expander(f"{len(st.session_state['query_history']) - idx}: {user_query}", expanded=True):
-            cols = st.columns(2)
-            with cols[0]:
-                st.markdown(f"**Generated SQL Query:**\n```sql\n{sql_query}\n```")
-            with cols[1]:
-                st.markdown("**Response From DB:**")
-                st.write(result)
+    history_container = st.empty()
+    with history_container.container():
+        for idx, (user_query, sql_query, result, imgLoc) in enumerate(reversed(st.session_state['query_history'][:-1])):
+            with st.expander(f"{len(st.session_state['query_history']) - 1 - idx}: {user_query}", expanded=True):
+                cols = st.columns(2)
+                with cols[0]:
+                    st.markdown("**Generated SQL Query:**")
+                    st.code(sql_query.strip(), language='sql')
+                
+                with cols[1]:
+                    st.markdown("**Response From DB:**")
+                    st.write(result)
 
-            if imgLoc:
-                st.markdown("**Plotting the Data**")
-                st.image(imgLoc, use_column_width='auto')
-            else:
-                st.markdown("   ")
-                st.markdown("   ")
-                st.markdown("   ")
-                st.markdown("   ")
-                st.markdown("   ")
-                st.markdown("   ")
-                st.markdown("\n\n\nVisualization Not Available\n\n\n")
-                st.markdown("   ")
-                st.markdown("   ")
-                st.markdown("   ")
-                st.markdown("   ")
-                st.markdown("   ")
-                st.markdown("   ")
-
-
+                if imgLoc:
+                    st.markdown("**Plotting the Data**")
+                    st.image(imgLoc, use_column_width='auto')
+                else:
+                    st.markdown("   ")
+                    st.markdown("   ")
+                    st.markdown("   ")
+                    st.markdown("   ")
+                    st.markdown("   ")
+                    st.markdown("   ")
+                    st.markdown("\n\n\nVisualization Not Available\n\n\n")
+                    st.markdown("   ")
+                    st.markdown("   ")
+                    st.markdown("   ")
+                    st.markdown("   ")
+                    st.markdown("   ")
+                    st.markdown("   ")
 def plotAI(df):
     llm = Ollama(model="llama3")
     df = SmartDataframe(df, config={"llm": llm})
