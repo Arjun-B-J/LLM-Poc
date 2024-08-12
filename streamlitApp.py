@@ -6,13 +6,6 @@ from pandasai import SmartDataframe
 import os
 
 def llmForSQL(query):
-    return """SELECT CITY, COUNT(*) AS CustomerCount
-FROM Customer
-WHERE DATEDIFF(CURRENT_DATE, LASTPAYMENT) >= 99 
-  AND LASTCONTACT = CURRENT_DATE 
-  AND ADJUSTLIMIT = TRUE
-GROUP BY CITY;
-"""
     # Initialize an instance of the Ollama model
     llm = Ollama(model="sqlcoder",temperature=0)
     llm2 = Ollama(model="llama3")
@@ -49,7 +42,6 @@ GROUP BY CITY;
 
     print(f"SQL Querry: {modelResponse}\n\n")
     return modelResponse
-    #return "SELECT s.stockname, s.changes FROM stockmarket s ORDER BY s.changes DESC LIMIT 10;"
 
 def executeQuery(querySQL):
         # Create a connection to the database
