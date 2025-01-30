@@ -1,0 +1,8 @@
+ID,TEAM,GOAL,POINTSCOMITTED,POINTSSDELIVERED,POINTSADDED,INTROSPECTIVE,PLANNING,DEMO,WEEKLYRELEASE,AUTOMATION,SHRP
+1,ALPHA,"Test Prod Bugs",30,11,8,0,1,1,1,1,0
+2,ALPHA,"Upgrade to Java 17",27,13,0,0,1,0,1,1,0
+3,ALPHA,"Fix Pros issue on Position",32,9,7,1,1,1,0,0,0
+4,HELIUM,"Posiyion Changes as per Regulatory",29,12,6,1,1,1,1,1,1
+5,HELIUM,"Design the Cloud Strategy",31,11,0,0,1,0,0,0,0
+6,HELIUM,"Documet the NFR's E2E",34,12,1,0,0,1,0,0,0
+7,RADON,"T+1 Settlement Chages",30,12,3,1,1,1,1,1,1
