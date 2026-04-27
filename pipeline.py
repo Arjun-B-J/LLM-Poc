@@ -1,5 +1,11 @@
+import os
 from langchain_community.llms import Ollama
 import mysql.connector
+
+MYSQL_HOST = os.environ.get('MYSQL_HOST', 'localhost')
+MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
+MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', '')
+MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE', 'new_schema')
 
 # Initialize an instance of the Ollama model
 llm = Ollama(model="sqlcoder")
@@ -49,10 +55,10 @@ print(f"Model Generated SQL Querry: {modelResponse}\n\n")
 
 # Create a connection to the database
 db = mysql.connector.connect(
-  host="localhost",  # replace with your host name
-  user="root",  # replace with your username
-  password="pass",  # replace with your password
-  database="new_schema"  # replace with your database name
+  host=MYSQL_HOST,
+  user=MYSQL_USER,
+  password=MYSQL_PASSWORD,
+  database=MYSQL_DATABASE
 )
 
 # Create a cursor object

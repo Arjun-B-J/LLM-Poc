@@ -1,10 +1,17 @@
+import os
 import mysql.connector
+
+MYSQL_HOST = os.environ.get('MYSQL_HOST', 'localhost')
+MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
+MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', '')
+MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE', 'sakila')
+
 # Create a connection to the database
 db = mysql.connector.connect(
-  host="localhost",  # replace with your host name
-  user="root",  # replace with your username
-  password="pass",  # replace with your password
-  database="sakila"  # replace with your database name
+  host=MYSQL_HOST,
+  user=MYSQL_USER,
+  password=MYSQL_PASSWORD,
+  database=MYSQL_DATABASE
 )
 
 # Create a cursor object

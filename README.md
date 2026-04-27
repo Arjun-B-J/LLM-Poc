@@ -61,9 +61,22 @@ pip install -r requirements.txt
 pip install streamlit langchain langchain-community mysql-connector-python pandas pandasai
 ```
 
-Update the MySQL connection details (`host`, `user`, `password`, `database`)
-near the top of `getSchema.py` and inside `executeQuery` in `streamlitApp.py`
-to match your environment, then:
+## Configuration
+
+MySQL connection details are read from environment variables. Copy
+`.env.example` to `.env` and fill in your values, or export them in your
+shell before running the scripts:
+
+```bash
+export MYSQL_HOST=localhost
+export MYSQL_USER=root
+export MYSQL_PASSWORD=your_password_here
+export MYSQL_DATABASE=your_db_here
+```
+
+On Windows PowerShell, use `$env:MYSQL_PASSWORD = "..."` etc.
+
+Then:
 
 ```bash
 # 1. Dump the schema the LLM will see

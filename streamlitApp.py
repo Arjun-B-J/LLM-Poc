@@ -5,6 +5,15 @@ import pandas as pd
 from pandasai import SmartDataframe
 import os
 
+MYSQL_HOST = os.environ.get('MYSQL_HOST', 'localhost')
+MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
+MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', '')
+MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE', 'creditcard')
+CHART_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    'exports', 'charts', 'temp_chart.png'
+)
+
 def llmForSQL(query):
     # Initialize an instance of the Ollama model
     llm = Ollama(model="sqlcoder",temperature=0)
@@ -46,10 +55,10 @@ def llmForSQL(query):
 def executeQuery(querySQL):
         # Create a connection to the database
     db = mysql.connector.connect(
-    host="localhost",  # replace with your host name
-    user="root",  # replace with your username
-    password="pass",  # replace with your password
-    database="creditcard"  # replace with your database name
+    host=MYSQL_HOST,
+    user=MYSQL_USER,
+    password=MYSQL_PASSWORD,
+    database=MYSQL_DATABASE
     )
 
     # Create a cursor object
@@ -104,7 +113,7 @@ def main():
             # Plotting the data
             st.markdown("**Plotting the Data**")
             # Add your plotting logic here. For demonstration, using a sample image.
-            st.image("C:/Users/bjarj/OneDrive/Documents/GitHub/LLM-Poc/exports/charts/temp_chart.png")
+            st.image(CHART_PATH)
 
 
 
